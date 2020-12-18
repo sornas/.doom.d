@@ -21,9 +21,9 @@
 ;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
 ;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
 
-(setq doom-font (font-spec :family "SF Mono" :size 15)
+(setq doom-font (font-spec :family "SF Mono" :size 16)
       doom-variable-pitch-font (font-spec :family "sans" :size 16)
-      doom-big-font (font-spec :family "SF Mono" :size 36))
+      doom-big-font (font-spec :family "SF Mono" :size 22))
 
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
@@ -38,9 +38,80 @@
 ;; + `nil'      -- No line numbers
 ;; + `t'        -- Normal line numbers
 ;; + `relative' -- Relative line numbers
-(setq display-line-numbers-type nil)
+(setq display-line-numbers-type t)
 
 (global-display-fill-column-indicator-mode) ;; enable if ARG is omitted or nil
+(mood-line-mode)
+
+(autoload 'lyskom "lyskom" "Start LysKOM" t)
+(defvar kom-server-aliases
+  '(("kom.lysator.liu.se" . "LysKOM")))
+(setq-default kom-default-language 'sv)
+(setq kom-default-server "kom.lysator.liu.se"
+      kom-default-user-name "Gustav Sörnäs")
+
+(after! org
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((dot . t)))
+  (setq org-capture-templates
+        `(("t" "Personal todo" entry
+           (file+headline +org-capture-todo-file "Inbox")
+           "* TODO %?\n  %i\n  %a"
+           :prepend t)
+          ("n" "Personal notes" entry
+           (file+headline +org-capture-notes-file "Inbox")
+           "* %u %?\n  %i\n  %a"
+           :prepend t)
+          ("w" "Review: weekly review" entry
+           (file+headline
+            "~/org/reviews.org"
+            ,(format-time-string "%Y"))
+           (file "~/org/templates/weeklyreview.org")
+           :immediate-finish t
+           :jump-to-captured t
+           :time-prompt t))))
+
+;; doom-modeline
+;(setq doom-modeline-height 25
+;      doom-modeline-bar-width 3
+;      doom-modeline-icon (display-graphic-p)
+;      doom-modeline-major-mode-icon t
+;      doom-modeline-major-mode-color-icon nil
+;      doom-modeline-modal-icon t)
+
+;;(doom-modeline-mode 1)
+;;(after! doom-modeline
+;;  (doom-modeline-def-modeline 'minimal
+;;    '(bar matches buffer-info)
+;;    '(parrot misc-info indent-info media-info lsp
+;;      checker buffer-encoding major-mode))
+;;  (doom-modeline-set-modeline 'minimal t))
+
+(use-package! org-roam
+  :defer t
+  :config
+  (setq org-roam-directory "~/org/roam/")
+  (require 'org-protocol)
+  (require 'org-roam-protocol))
+(use-package! company-org-roam
+  :defer t)
+
+(setq ivy-use-selectable-prompt t)
+
+(after! org-roam-server
+  :config
+  (setq org-roam-server-host "127.0.0.1"
+        org-roam-server-port 8080
+        org-roam-server-authenticate nil
+        org-roam-server-export-inline-images t
+        org-roam-server-serve-files nil
+        org-roam-server-served-file-extensions '("pdf" "mp4" "ogv")
+        org-roam-server-network-poll t
+        org-roam-server-network-arrows nil
+        org-roam-server-network-label-truncate t
+        org-roam-server-network-label-truncate-length 60
+        org-roam-server-network-label-wrap-length 20))
 
 ;; Here are some additional functions/macros that could help you configure Doom:
 ;;
@@ -83,52 +154,12 @@
   (setq notmuch-fcc-dirs "sent +sent -new") ; store all sent messages with a tag
 
   (setq message-auto-save-directory "~/.mail/draft")
-  (setq message-default-mail-headers "Cc: \nBcc: \n")
+  (setq message-default-mail-headers "Cc: \nBcc: \n"))
 
-  (gnus-alias-init)
-  (add-hook 'message-setup-hook 'gnus-alias-determine-identity) ; check identity
-  (setq gnus-alias-identity-alist
-        '(("gmail"
-           nil ; TODO
-           "Gustav Sörnäs <gustav@sornas.net>"
-           nil ; organization header
-           nil ; extra headers
-           nil ; extra body text
-           "~/.mail/gmail/signature") ; signature file
-          ("liu"
-           nil
-           "Gustav Sörnäs <gusso230@student.liu.se>"
-           nil
-           nil
-           nil
-           "~/.mail/liu/signature")
-          ("lithekod"
-           nil
-           "Gustav Sörnäs <vordf@lithekod.se>"
-           "LiTHe kod"
-           nil
-           nil
-           "~/.mail/lithekod/signature")
-          ("liu"
-           nil
-           "Gustav Sörnäs <gustav@icahasse.se>"
-           nil
-           nil
-           nil
-           "~/.mail/icahasse/signature")
-          ("lysator"
-           nil
-           "Gustav Sörnäs <sornas@lysator.liu.se>"
-           nil
-           nil
-           nil
-           "~/.mail/lysator/signature"))
-        gnus-alias-default-identity "gmail"
-        gnus-alias-identity-rules
-        '(("liu" ("any" "@\\(^\\.\\)*\\.liu\\.se" both) "liu")
-          ("lithekod" ("any" "@lithekod\\.se" both) "lithekod")
-          ("icahasse" ("any" "@icahasse\\.se" both) "icahasse")
-          ("lysator" ("any" "sornas@lysator\\.liu\\.se" both) "lysator"))))
+(after! rust-mode
+  (add-hook! 'flycheck-mode-hook #'flycheck-rust-setup))
+(add-hook! 'rust-mode-hook #'lsp)
+(add-hook! 'lsp-mode-hook #'lsp-enable-which-key-integration)
 
 (map! :map doom-leader-map
       "o e" 'elfeed)
@@ -138,10 +169,8 @@
 (add-hook! 'c-mode-hook #'clang-format+-mode)
 
 (after! rustic
-        (setq rustic-lsp-server 'rls))
+  (setq rustic-lsp-server 'rls))
 
-;;TODO get org dir from variable
-;;TODO fuzzy search all files, not only first level
 (defun doom/open-org ()
   "Browse your org dir."
   (interactive)

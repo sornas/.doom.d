@@ -42,17 +42,29 @@
 
 (package! clang-format+)
 
-(package! purp-theme)
-(package! basic-theme)
-(package! borland-blue-theme)
-(package! sorcery-theme)
-
+(package! doom-snippets :ignore t)
 (package! doom-themes :recipe (:host github :repo "sornas/emacs-doom-themes"))
+
+(package! mood-line)
+(package! parrot)
+
+(package! org-roam
+  :recipe (:host github :repo "org-roam/org-roam" :branch "master"))
+(package! org-roam-server)
+(package! company-org-roam
+  :recipe (:host github :repo "org-roam/company-org-roam" :branch "master"))
+
+(package! lsp-mode)
+(package! lsp-ui)
+
+(package! toml-mode)
+(package! rust-mode)
+(package! cargo)
+(package! flycheck-rust)
+
 (unpin! doom-themes)
 
-(package! gnus-alias :recipe (:host github :repo "hexmode/gnus-alias"))
-
-(package! doom-snippets :ignore t)
+;;(package! moonscript)
 
 ;; Doom's packages are pinned to a specific commit and updated from release to
 ;; release. The `unpin!' macro allows you to unpin single packages...
